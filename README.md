@@ -1,2 +1,2 @@
 # imageDiffComparison
-Демонстрация способов сравнения изображений
+[Демонстрация](https://pixhub-int.github.io/imageDiffComparison/) способов сравнения изображений
