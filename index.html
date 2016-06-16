@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" class="Document">
+<head>
+	<meta charset="UTF-8">
+	<title>imageDiffComparison</title>
+	<link rel="stylesheet" href="main.css">
+</head>
+<body class="Page">
+
+<div class="App">
+	<div class="App__group">
+		<div class="App__box App__box--control">
+			<div class="Loaders">
+				<div tabindex="0" class="Loader" data-type="a">
+					<img src="" alt="" class="Loader__image">
+					<input class="Loader__input" type="file" id="loaderA" accept="image/*">
+				</div>
+				<div tabindex="0" class="Loader" data-type="b">
+					<img src="" alt="" class="Loader__image">
+					<input class="Loader__input" type="file" id="loaderB" accept="image/*">
+				</div>
+			</div>
+			<div class="Modes">
+				<div tabindex="0" class="Mode" data-type="side">Рядом</div>
+				<div tabindex="0" class="Mode" data-type="swipe">Шторка</div>
+				<div tabindex="0" class="Mode" data-type="opacity">Растворение</div>
+				<div tabindex="0" class="Mode" data-type="negative">Разница</div>
+				<div tabindex="0" class="Mode" data-type="highlight">Подсветка</div>
+				<div tabindex="0" class="Mode" data-type="inline">Встроенный</div>
+			</div>
+		</div>
+		<div class="App__box App__box--view"><div class="Viewer__wrapper"><div class="Viewer"><img src="" alt="" class="Viewer__img" data-type="main"><img src="" alt="" class="Viewer__img" data-type="a"><img src="" alt="" class="Viewer__img" data-type="b"><canvas class="Viewer__img" data-type="c"></canvas></div></div></div>
+	</div>
+</div>
+
+<script src="paste.js"></script>
+<script src="getDiff.js"></script>
+<script src="diffInline.js"></script>
+<script src="drawInlineDiff.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
