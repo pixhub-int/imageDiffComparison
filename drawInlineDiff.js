@@ -29,7 +29,7 @@ function drawInlineDiff (src1, src2) {
 		var result = renderResult(data);
 
 		return new Promise(function (resolve, reject) {
-			resolve(result);
+			resolve(result, diff);
 		});
 	};
 

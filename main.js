@@ -163,7 +163,7 @@ function onClick (e) {
 				ui.viewerImg.b.src = ui.loaderImg.b.src;
 				break;
 
-			// растворение
+			// шторка
 			case 'swipe':
 				ui.viewerImg.a.src = ui.loaderImg.a.src;
 				ui.viewerImg.b.src = empty;
@@ -189,6 +189,14 @@ function onClick (e) {
 				setTimeout(function () {
 					ui.viewer.classList.add('Viewer--diff-opacity');
 				}, 0);
+
+				ui.viewer.addEventListener('mousemove', function (e) {
+					ui.viewerImg.b.style.opacity = ((e.pageX - this.getBoundingClientRect().right) * -1) / ui.viewerImg.a.clientWidth;
+				});
+
+				ui.viewer.addEventListener('mouseleave', function () {
+					ui.viewerImg.b.style.opacity = '1';
+				});
 				break;
 
 			// разница
@@ -201,7 +209,7 @@ function onClick (e) {
 				}, 0);
 				break;
 
-			// разница
+			// подсветка
 			case 'highlight':
 				getDiff({
 					imgs: [ui.loaderImg.a.src, ui.loaderImg.b.src]
@@ -221,14 +229,13 @@ function onClick (e) {
 				});
 				break;
 
-			// разница
+			// встроенный
 			case 'inline':
-				drawInlineDiff(ui.loaderImg.a.src, ui.loaderImg.b.src).then(function (diff) {
+				drawInlineDiff(ui.loaderImg.a.src, ui.loaderImg.b.src).then(function (diffCanvas, diffData) {
 					ui.viewerImg.c.style.display = 'inline-block';
-					ui.viewerImg.c.width = diff.width;
-					ui.viewerImg.c.height = diff.height;
-					console.log(diff);
-					ui.viewerImg.c.getContext('2d').drawImage(diff, 0, 0);
+					ui.viewerImg.c.width = diffCanvas.width;
+					ui.viewerImg.c.height = diffCanvas.height;
+					ui.viewerImg.c.getContext('2d').drawImage(diffCanvas, 0, 0);
 				});
 				break;
 
