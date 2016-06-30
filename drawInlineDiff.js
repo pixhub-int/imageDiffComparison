@@ -22,8 +22,12 @@ function drawInlineDiff (src1, src2) {
 	};
 
 	function processImages (images) {
-		var firstData = getImageData(images[0]);
-		var secondData = getImageData(images[1]);
+		var size = {
+			width: images[0].width > images[1].width ? images[0].width : images[1].width,
+			height: images[0].height > images[1].height ? images[0].height : images[1].height
+		};
+		var firstData = getImageData(images[0], size);
+		var secondData = getImageData(images[1], size);
 		var diff = diffInline(firstData, secondData);
 		var data = writeData(diff.data);
 		var result = renderResult(data);
@@ -33,14 +37,14 @@ function drawInlineDiff (src1, src2) {
 		});
 	};
 
-	function getImageData (image) {
+	function getImageData (image, size) {
 		var c = document.createElement('canvas');
 		var cx = c.getContext('2d');
 		var result = [];
 		var data;
 
-		c.width = image.width;
-		c.height = image.height;
+		c.width = size.width;
+		c.height = size.height;
 		cx.drawImage(image, 0, 0);
 
 		data = cx.getImageData(0, 0, c.width, c.height);

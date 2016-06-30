@@ -189,14 +189,6 @@ function onClick (e) {
 				setTimeout(function () {
 					ui.viewer.classList.add('Viewer--diff-opacity');
 				}, 0);
-
-				ui.viewer.addEventListener('mousemove', function (e) {
-					ui.viewerImg.b.style.opacity = ((e.pageX - this.getBoundingClientRect().right) * -1) / ui.viewerImg.a.clientWidth;
-				});
-
-				ui.viewer.addEventListener('mouseleave', function () {
-					ui.viewerImg.b.style.opacity = '1';
-				});
 				break;
 
 			// разница

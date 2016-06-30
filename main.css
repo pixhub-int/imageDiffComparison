@@ -159,6 +159,13 @@
 	background-position: 100% 0;
 }
 
+.Viewer--diff-opacity .Viewer__img[data-type="b"] {
+	transition: .5s;
+}
+.Viewer--diff-opacity:hover .Viewer__img[data-type="b"] {
+	opacity: 0;
+}
+
 .Viewer--diff-negative .Viewer__img[data-type="b"] {
 	-webkit-filter: invert(100%);
 	        filter: invert(100%);
