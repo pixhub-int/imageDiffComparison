@@ -1,9 +1,9 @@
 // получение разницы
 // подсвечивать более позднее
-function getDiff (options) {
+function getPixelDiff (options) {
 
 	if (!options.imgs) {
-		console.warn('getDiff: Не переданы изображения для сравнения');
+		console.warn('getPixelDiff: Не переданы изображения для сравнения');
 		return false;
 	};
 
@@ -67,12 +67,12 @@ function getDiff (options) {
 			
 			// получаем данные
 			context.drawImage(images[0], 0, 0, images[0].width/cfg.ratio, images[0].height/cfg.ratio);
-			data0 = context.getImageData(0, 0, width/cfg.ratio, height/cfg.ratio);
+			data0 = context.getImageData(0, 0, canvas.width, canvas.height);
 
 			context.clearRect(0, 0, canvas.width, canvas.height);
 
 			context.drawImage(images[1], 0, 0, images[1].width/cfg.ratio, images[1].height/cfg.ratio);
-			data1 = context.getImageData(0, 0, width/cfg.ratio, height/cfg.ratio);
+			data1 = context.getImageData(0, 0, canvas.width, canvas.height);
 			
 			context.clearRect(0, 0, canvas.width, canvas.height);
 
