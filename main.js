@@ -203,7 +203,7 @@ function onClick (e) {
 
 			// подсветка
 			case 'highlight':
-				getDiff({
+				getPixelDiff({
 					imgs: [ui.loaderImg.a.src, ui.loaderImg.b.src]
 				}).then(function (data) {
 					ui.viewerImg.a.src = ui.loaderImg.a.src;
