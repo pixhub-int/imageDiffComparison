@@ -185,3 +185,17 @@
 .Viewer--diff-highlight .Viewer__img[data-type="c"] {
 	opacity: .5;
 }
+
+.Viewer__wrapper--diff-inline::-webkit-scrollbar {
+	width: 12px;
+}
+.Viewer__wrapper--diff-inline::-webkit-scrollbar-track {
+	background-size: contain;
+	opacity: .4;
+}
+.Viewer__wrapper--diff-inline::-webkit-scrollbar-thumb {
+	background: rgba(0,0,0,.5);
+}
+.Viewer__wrapper--diff-inline::-webkit-scrollbar-thumb:window-inactive {
+	background: rgba(0,0,0,.25);
+}
