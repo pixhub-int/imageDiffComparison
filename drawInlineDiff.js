@@ -1,3 +1,35 @@
+
+/**
+ * Протез для конструктора ImageData
+ *
+ * может принимать на вход обычные массивы, не только Uint8ClampedArray
+ * не работает в работниках, потому что реализован через createImageData
+ */
+
+(function (undefined) {
+	try {
+		new ImageData([], 1, 1);
+	}
+	catch (e) {
+		this.ImageData = function (data, width, height) {
+			var canvas = document.createElement('canvas');
+			var image = canvas.getContext('2d').createImageData(width, height);
+
+			for (var i = 0; i < data.length; i++) {
+				image.data[i] = data[i];
+			};
+
+			return image;
+		};
+	};
+}).call(
+	'object' === typeof window && window
+	|| 'object' === typeof self && self
+	|| 'object' === typeof global && global
+	|| {}
+);
+
+
 function drawInlineDiff (src1, src2) {
 	var imgChecks = [];
 
@@ -33,7 +65,10 @@ function drawInlineDiff (src1, src2) {
 		var result = renderResult(data);
 
 		return new Promise(function (resolve, reject) {
-			resolve(result, diff);
+			resolve({
+				result: result,
+				diff: diff
+			});
 		});
 	};
 
@@ -75,7 +110,7 @@ function drawInlineDiff (src1, src2) {
 						item = item - 30;
 					};
 				};
-					if (line.type === 'new') {
+				if (line.type === 'new') {
 					if ((i+1) % 4 === 1) {
 						item = item - 30;
 					};

@@ -1,9 +1,9 @@
 
 // http://stackoverflow.com/questions/19469881/remove-all-event-listeners-of-specific-type
-EventTarget.prototype.addEventListenerBase = EventTarget.prototype.addEventListener;
+EventTarget.prototype._addEventListener = EventTarget.prototype.addEventListener;
 EventTarget.prototype.addEventListener = function (type, listener) {
 	if (!this.EventList) { this.EventList = []; };
-	this.addEventListenerBase.apply(this, arguments);
+	this._addEventListener.apply(this, arguments);
 	if (!this.EventList[type]) { this.EventList[type] = []; };
 
 	var list = this.EventList[type];
@@ -14,10 +14,10 @@ EventTarget.prototype.addEventListener = function (type, listener) {
 	list.push(listener);
 };
 
-EventTarget.prototype.removeEventListenerBase = EventTarget.prototype.removeEventListener;
+EventTarget.prototype._removeEventListener = EventTarget.prototype.removeEventListener;
 EventTarget.prototype.removeEventListener = function (type, listener) {
 	if (!this.EventList) { this.EventList = []; };
-	if (listener instanceof Function) { this.removeEventListenerBase.apply(this, arguments); };
+	if (listener instanceof Function) { this._removeEventListener.apply(this, arguments); };
 	if (!this.EventList[type]) { return; };
 
 	var list = this.EventList[type];
@@ -26,7 +26,7 @@ EventTarget.prototype.removeEventListener = function (type, listener) {
 		var item = list[index];
 
 		if (!listener) {
-			this.removeEventListenerBase(type, item);
+			this._removeEventListener(type, item);
 			list.splice(index, 1); continue;
 		}
 
@@ -37,6 +37,36 @@ EventTarget.prototype.removeEventListener = function (type, listener) {
 		index++;
 	};
 	if (list.length == 0) { delete this.EventList[type]; };
+};
+
+
+// протез для определения ближайшего родителя по селектору
+// https://developer.mozilla.org/ru/docs/Web/API/Element/closest
+Element.prototype.matches = Element.prototype.matches || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector;
+Element.prototype.closest = Element.prototype.closest || function closest(selector) {
+	if (!this) return null;
+	if (this.matches(selector)) return this;
+	if (!this.parentElement) { return null }
+	else return this.parentElement.closest(selector)
+};
+
+
+// протез для генерации файла из содержимого холста
+if (!HTMLCanvasElement.prototype.toBlob) {
+	Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+		value: function (callback, type, quality) {
+
+			var binStr = atob(this.toDataURL(type, quality).split(',')[1]),
+				len = binStr.length,
+				arr = new Uint8Array(len);
+
+			for (var i = 0; i < len; i++) {
+				arr[i] = binStr.charCodeAt(i);
+			}
+
+			callback(new Blob([arr], { type: type || 'image/png' }));
+		}
+	});
 };
 
 
@@ -54,6 +84,7 @@ var ui = {
 	},
 	modes: document.querySelectorAll('.Mode'),
 	viewer: document.querySelector('.Viewer'),
+	wrapper: document.querySelector('.Viewer__wrapper'),
 	viewerImgs: document.querySelectorAll('.Viewer__img'),
 	viewerImg: {
 		main: document.querySelector('.Viewer__img[data-type="main"]'),
@@ -77,7 +108,7 @@ function getEmpty () {
 	c.height = 1;
 
 	return c.toDataURL();
-}
+};
 
 function clear () {
 	ui.viewerImg.main.src = empty;
@@ -96,6 +127,10 @@ function clear () {
 	[].forEach.call(ui.loaders, function (loader) {
 		loader.classList.remove('Loader--active');
 	});
+
+	if (document.querySelector('#Marks')) {
+		document.querySelector('#Marks').remove();
+	};
 
 	ui.viewer.removeEventListener('mousemove');
 	ui.viewer.removeEventListener('mouseleave');
@@ -223,11 +258,15 @@ function onClick (e) {
 
 			// встроенный
 			case 'inline':
-				drawInlineDiff(ui.loaderImg.a.src, ui.loaderImg.b.src).then(function (diffCanvas, diffData) {
+				drawInlineDiff(ui.loaderImg.a.src, ui.loaderImg.b.src).then(function (data) {
 					ui.viewerImg.c.style.display = 'inline-block';
-					ui.viewerImg.c.width = diffCanvas.width;
-					ui.viewerImg.c.height = diffCanvas.height;
-					ui.viewerImg.c.getContext('2d').drawImage(diffCanvas, 0, 0);
+					ui.viewerImg.c.width = data.result.width;
+					ui.viewerImg.c.height = data.result.height;
+					ui.viewerImg.c.getContext('2d').drawImage(data.result, 0, 0);
+					document.body.insertAdjacentHTML('afterBegin', generateDiffMarks(data.diff));
+					setTimeout(function () {
+						ui.wrapper.classList.add('Viewer__wrapper--diff-inline');
+					}, 0);
 				});
 				break;
 
@@ -235,6 +274,43 @@ function onClick (e) {
 				break;
 		}
 	};
+};
+
+
+function generateDiffMarks (diff) {
+	if (!diff) { return ''; };
+
+	var marks = [];
+
+	diff.data.forEach(function (line) {
+		var item = [0,0,0,0];
+
+		if (line.type === 'old') {
+			item = [255,0,0,200];
+		};
+		if (line.type === 'new') {
+			item = [0,255,0,200];
+		};
+		marks = marks.concat(item);
+	});
+
+	var marksImage = new ImageData(new Uint8ClampedArray(marks), 1, diff.data.length);
+	var c = document.createElement('canvas');
+	var cx = c.getContext('2d');
+
+	c.width = marksImage.width;
+	c.height = marksImage.height;
+	cx.putImageData(marksImage, 0, 0);
+	
+	var marks = c.toDataURL();
+	var result = '<style id="Marks">';
+
+	result += '.Viewer__wrapper::-webkit-scrollbar-track {';
+	result += 'background-image: url("'+ marks +'");'; 
+	result += '}';
+	result += '</style>';
+
+	return result;
 };
 
 
