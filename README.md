@@ -1,6 +1,4 @@
-# imageDiffComparison
-
-[Демонстрация](https://pixhub-int.github.io/imageDiffComparison/) способов сравнения изображений.
+# [Способы сравнения изображений](https://pixhub-int.github.io/imageDiffComparison/)
 
 В панели есть два слота для сравниваемых изображений. Изображения добавляются в слот:
 

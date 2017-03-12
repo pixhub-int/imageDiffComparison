@@ -82,6 +82,9 @@ var ui = {
 		a: document.querySelector('.Loader[data-type="a"] .Loader__image'),
 		b: document.querySelector('.Loader[data-type="b"] .Loader__image')
 	},
+	boxes: {
+		view: document.querySelector('.App__box--view')
+	},
 	modes: document.querySelectorAll('.Mode'),
 	viewer: document.querySelector('.Viewer'),
 	wrapper: document.querySelector('.Viewer__wrapper'),
@@ -94,6 +97,7 @@ var ui = {
 	}
 };
 
+// чтобы в хроме не отображалась рамка отсутствующего изображения
 var empty = getEmpty();
 
 [].forEach.call(document.querySelectorAll('img'), function (img) {
@@ -110,6 +114,7 @@ function getEmpty () {
 	return c.toDataURL();
 };
 
+// очистка состояния
 function clear () {
 	ui.viewerImg.main.src = empty;
 	ui.viewerImg.a.src = empty;
@@ -239,7 +244,10 @@ function onClick (e) {
 			// подсветка
 			case 'highlight':
 				getPixelDiff({
-					imgs: [ui.loaderImg.a.src, ui.loaderImg.b.src]
+					imgs: [
+						ui.loaderImg.a.src,
+						ui.loaderImg.b.src
+					]
 				}).then(function (data) {
 					ui.viewerImg.a.src = ui.loaderImg.a.src;
 					ui.viewerImg.b.src = ui.loaderImg.b.src;
@@ -250,6 +258,13 @@ function onClick (e) {
 					ui.viewerImg.c.getContext('2d').drawImage(data.canvas, 0, 0);
 					ui.viewerImg.c.style.marginLeft = '-'+ ui.viewerImg.b.clientWidth +'px';
 					ui.viewerImg.c.style.mixBlendMode = 'multiply';
+					generateDiffMarks({
+						data: data
+					}).then(function (data) {
+						ui.boxes.view.appendChild(data.marks);
+						URL.revokeObjectURL(data.url);
+						checkScroll();
+					});
 					setTimeout(function () {
 						ui.viewer.classList.add('Viewer--diff-highlight');
 					}, 0);
@@ -258,15 +273,30 @@ function onClick (e) {
 
 			// встроенный
 			case 'inline':
-				drawInlineDiff(ui.loaderImg.a.src, ui.loaderImg.b.src).then(function (data) {
-					ui.viewerImg.c.style.display = 'inline-block';
-					ui.viewerImg.c.width = data.result.width;
-					ui.viewerImg.c.height = data.result.height;
-					ui.viewerImg.c.getContext('2d').drawImage(data.result, 0, 0);
-					document.body.insertAdjacentHTML('afterBegin', generateDiffMarks(data.diff));
-					setTimeout(function () {
-						ui.wrapper.classList.add('Viewer__wrapper--diff-inline');
-					}, 0);
+				diffInline([
+					ui.loaderImg.a.src,
+					ui.loaderImg.b.src
+				]).then(function (data) {
+					if (data.diff.old + data.diff.new) {
+						ui.viewerImg.c.style.display = 'inline-block';
+						ui.viewerImg.c.width = data.diff.image.width;
+						ui.viewerImg.c.height = data.diff.image.height;
+						ui.viewerImg.c.getContext('2d').drawImage(diffInline.renderResult(data.diff.image), 0, 0);
+						generateDiffMarks(data.diff).then(function (data) {
+							ui.boxes.view.appendChild(data.marks);
+							URL.revokeObjectURL(data.url);
+							if (data.first) {
+								ui.wrapper.scrollTop = data.first;
+							};
+							checkScroll();
+						});
+						setTimeout(function () {
+							ui.wrapper.classList.add('Viewer__wrapper--diff-inline');
+						}, 0);
+					}
+					else {
+						alert('Изображения одинаковы!');
+					};
 				});
 				break;
 
@@ -276,41 +306,176 @@ function onClick (e) {
 	};
 };
 
+var scrollInfo = (function () {
+	var width = 15;
+	var height = 15;
 
+	var e = createNode(`
+		<div style="width: 100px; height: 100px; overflow: scroll; position: absolute; visibility: hidden; top: -100%; left: -100%"></div>
+	`);
+
+	document.body.appendChild(e);
+
+	width = e.offsetWidth - e.clientWidth;
+	height = e.offsetHeight - e.clientHeight;
+
+	function hasX (node) {
+		return !!(node.offsetHeight - node.clientHeight);
+	};
+
+	function hasY (node) {
+		return !!(node.offsetWidth - node.clientWidth);
+	};
+
+	function check (node) {
+		return {
+			x: hasX(node),
+			y: hasY(node)
+		}
+	};
+
+	return {
+		width: width,
+		height: height,
+		hasX: hasX,
+		hasY: hasY,
+		check: check
+	}
+})();
+
+checkScroll();
+window.addEventListener('resize', checkScroll);
+
+function checkScroll () {
+	var marks = document.querySelector('#Marks');
+
+	if (!marks) { return; };
+
+	var check = scrollInfo.check(ui.wrapper);
+
+	if (check.x) {
+		document.querySelector('#Marks').style.height = `calc(100% - ${scrollInfo.height * 3}px)`;
+	}
+	else {
+		document.querySelector('#Marks').style.height = `calc(100% - ${scrollInfo.height * 2}px)`;
+	};
+
+	if (check.y) {
+		document.querySelector('#Marks').style.visibility = 'visible';
+	}
+	else {
+		document.querySelector('#Marks').style.visibility = '';
+	};
+};
+
+// СДЕЛАТЬ
+// на большом количестве меток видна погрешность позиционирования
 function generateDiffMarks (diff) {
 	if (!diff) { return ''; };
 
-	var marks = [];
-
-	diff.data.forEach(function (line) {
-		var item = [0,0,0,0];
-
-		if (line.type === 'old') {
-			item = [255,0,0,200];
-		};
-		if (line.type === 'new') {
-			item = [0,255,0,200];
-		};
-		marks = marks.concat(item);
-	});
-
-	var marksImage = new ImageData(new Uint8ClampedArray(marks), 1, diff.data.length);
 	var c = document.createElement('canvas');
 	var cx = c.getContext('2d');
 
-	c.width = marksImage.width;
-	c.height = marksImage.height;
-	cx.putImageData(marksImage, 0, 0);
-	
-	var marks = c.toDataURL();
-	var result = '<style id="Marks">';
+	c.width = 1;
 
-	result += '.Viewer__wrapper::-webkit-scrollbar-track {';
-	result += 'background-image: url("'+ marks +'");'; 
-	result += '}';
-	result += '</style>';
+	var diffItems;
+	var length = 0;
 
-	return result;
+	if (diff.data && diff.data.canvas) {
+		diffItems = diff.data.difference.y;
+		length = diffItems.length;
+		c.height = diff.data.canvas.height;
+	}
+	else if (diff.default) {
+		diffItems = diff.data;
+		length = diffItems.length;
+		c.height = length;
+	};
+
+	// первое отличие
+	var firstMark = 0;
+
+	var canvasPointer = 0;
+	var shift = 0;
+	var shiftOld = 0;
+	var shiftNew = 0;
+
+	for (var index = 0; index < length - 1; index++) {
+		var line = diffItems[index];
+		
+		if (!line.type) {
+			if (firstMark === 0) {
+				firstMark = line;
+			};
+
+			cx.fillStyle = 'red';
+			cx.fillRect(0, line, 1, 1);
+		}
+		else {
+			if (
+				firstMark === 0
+				&& line.type && ['old', 'new', 'replace'].indexOf(line.type) > -1
+			) {
+				firstMark = line.line + shift;
+			};
+
+			if (line.type === 'replace') {
+				var counter = 0;
+				var canvasPointer = line.lines[0][0].line + shift;
+
+				while (counter < line.lines[0].length) {
+					cx.fillStyle = 'red';
+					cx.fillRect(0, ++canvasPointer, 1, 1);
+					counter++;
+				};
+
+				counter = 0;
+				
+				while (counter < line.lines[1].length) {
+					cx.fillStyle = 'green';
+					cx.fillRect(0, ++canvasPointer, 1, 1);
+					counter++;
+				};
+
+				shift += counter;
+			}
+			else if (line.type === 'old') {
+				var canvasPointer = line.line + shiftNew;
+				
+				cx.fillStyle = 'red';
+				cx.fillRect(0, canvasPointer, 1, 1);
+				shiftOld++;
+			}
+			else if (line.type === 'new') {
+				var canvasPointer = line.line + shiftOld;
+				
+				cx.fillStyle = 'green';
+				cx.fillRect(0, canvasPointer, 1, 1);
+				shiftNew++;
+			};
+		};
+	};
+
+	return new Promise(function (resolve, reject) {
+		c.toBlob(function (blob) {
+			var img = new Image();
+			var url = URL.createObjectURL(blob);
+
+			img.src = url;
+
+			resolve({
+				marks: createNode(`
+					<img class="Viewer__diff-marks Viewer__diff-marks--vertical" id="Marks" src="${url}" style="
+						width: ${scrollInfo.width}px;
+						top: ${scrollInfo.width}px;
+						height: calc(100% - ${scrollInfo.width * 2}px)
+					">
+				`),
+				first: firstMark,
+				url: url
+			});
+		});
+	})
 };
 
 
@@ -369,4 +534,9 @@ function onFile (e) {
 		
 		image.src = src;
 	};
+};
+
+
+function createNode (str) {
+	return document.createRange().createContextualFragment(str.trim()).firstElementChild;
 };

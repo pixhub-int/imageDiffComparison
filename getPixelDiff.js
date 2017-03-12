@@ -109,7 +109,7 @@ function getPixelDiff (options) {
 					});
 
 					difference.y = pushDiff({
-						obj: Math.round(i * cfg.ratio * cfg.ratio / 4 / canvas.width),
+						obj: Math.round(i * cfg.ratio / 4 / canvas.width),
 						target: difference.y
 					});
 
