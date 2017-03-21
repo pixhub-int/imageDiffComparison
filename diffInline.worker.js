@@ -24,4 +24,7 @@ onmessage = function (e) {
 
 	// отправляем результат
 	postMessage(result);
+
+	// выключаем рабочего
+	close();
 };
