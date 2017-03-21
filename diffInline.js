@@ -30,15 +30,37 @@
 );
 
 
-function diffInline (images) {
-	var imgChecks = [];
+var diffInline = (function () {
+	var workerPath = getCurrentWorkerPath() +'diffInline.worker.js';
+	var worker;
 
-	imgChecks.push(getCheck(images[0]));
-	imgChecks.push(getCheck(images[1]));
+	return function (images) {
+		var imgChecks = [];
 
-	var worker = new Worker('diffInline.worker.js');
+		imgChecks.push(getCheck(images[0]));
+		imgChecks.push(getCheck(images[1]));
 
-	return Promise.all(imgChecks).then(processImages);
+		worker = new Worker(workerPath);
+
+		return Promise.all(imgChecks).then(processImages);
+	};
+
+	// получение пути к текущему скрипту
+	function getCurrentWorkerPath () {
+		try {
+			var result = document.currentScript.src.split('/');
+
+			result.pop();
+			result = result.join('/');
+			result += '/';
+
+			return result;
+		}
+		catch (e) {
+			console.log(e);
+			return null;
+		}
+	};
 
 	function processImages (images) {
 		var img1 = getImageData(images[0]);
@@ -53,6 +75,7 @@ function diffInline (images) {
 			worker.onmessage = function (e) {
 				e.data.diff.image = writeData(e.data);
 				resolve(e.data);
+				worker.terminate();
 			};
 		});
 	}
@@ -87,7 +110,7 @@ function diffInline (images) {
 	function writeData (diff) {
 		return new ImageData(diff.image, diff.width, diff.height);
 	};
-};
+})();
 
 diffInline.renderResult = function (data) {
 	var result = document.createElement('canvas');
