@@ -264,6 +264,7 @@ function onClick (e) {
 						ui.boxes.view.appendChild(data.marks);
 						URL.revokeObjectURL(data.url);
 						checkScroll();
+						window.scrollTo(window.pageXOffset, data.first);
 					});
 					setTimeout(function () {
 						ui.viewer.classList.add('Viewer--diff-highlight');
@@ -289,6 +290,7 @@ function onClick (e) {
 								ui.wrapper.scrollTop = data.first;
 							};
 							checkScroll();
+							window.scrollTo(window.pageXOffset, data.first);
 						});
 						setTimeout(function () {
 							ui.wrapper.classList.add('Viewer__wrapper--diff-inline');
@@ -354,17 +356,17 @@ function checkScroll () {
 	var check = scrollInfo.check(ui.wrapper);
 
 	if (check.x) {
-		document.querySelector('#Marks').style.height = `calc(100% - ${scrollInfo.height * 3}px)`;
+		marks.style.height = `calc(100% - ${scrollInfo.height * 3}px)`;
 	}
 	else {
-		document.querySelector('#Marks').style.height = `calc(100% - ${scrollInfo.height * 2}px)`;
+		marks.style.height = `calc(100% - ${scrollInfo.height * 2}px)`;
 	};
 
 	if (check.y) {
-		document.querySelector('#Marks').style.visibility = 'visible';
+		marks.style.visibility = 'visible';
 	}
 	else {
-		document.querySelector('#Marks').style.visibility = '';
+		marks.style.visibility = '';
 	};
 };
 
@@ -416,7 +418,7 @@ function generateDiffMarks (diff) {
 				firstMark === 0
 				&& line.type && ['old', 'new', 'replace'].indexOf(line.type) > -1
 			) {
-				firstMark = line.line + shift;
+				firstMark = index + shift;
 			};
 
 			if (line.type === 'replace') {
