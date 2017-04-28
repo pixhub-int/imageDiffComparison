@@ -142,10 +142,11 @@
 }
 .Viewer {
 	display: inline-block;
+	vertical-align: middle;
 	position: relative;
 }
 .Viewer__img {
-	vertical-align: middle;
+	vertical-align: top;
 }
 .Viewer__img[data-type="c"] {
 	display: none;
